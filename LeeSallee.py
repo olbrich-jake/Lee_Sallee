@@ -35,27 +35,25 @@ Redeye = os.path.join(path, "Redeye_Perim_w_Lakes.shp")
 Famine = os.path.join(path, "Famine_Perim_w_Lakes.shp")
 spat_ref= arcpy.Describe(Redeye).spatialReference
 
-#file
+#output text
 new_file = open(os.path.join(path, "LeeSallee_info.txt"),"w")
 new_file.write("Fire_name, Actual_Fire, SIM_FIRE, Int_Fire, Union_Fire \n")
 
 for root, directories, files in os.walk(path):
         for d in directories:
-                print(d)
                 if d.startswith("Sim_"):
                         arcpy.env.workspace = os.path.join(path,d)
-                        print(d)
                         for root, directories, files in os.walk(d):
                                         for f in files:
                                                 if f.endswith('.shp'):
                                                         if f.startswith('RE_'):
                                                                 p = os.path.join(os.path.join(path,root),f)
                                                                 new_file.write(f)
-                                                                new_file.write(", 7248915.47482, ")
-                                                                arcpy.AddField_management(p, "Uniform", "Integer")
-                                                                arcpy.RepairGeometry_management(p)
-                                                                print(f)
-                                                                dis = arcpy.Dissolve_management(p, str('dis_' + f), 'Uniform')
+                                                                new_file.write(", 7248915.47482, ") #Redeye Fire Perimeter
+                                                                arcpy.AddField_management(p, "Uniform", "Integer") #Add Dissolve agent
+                                                                arcpy.RepairGeometry_management(p) #Areas were errroneously negative
+                                                                dis = arcpy.Dissolve_management(p, str('dis_' + f), 'Uniform') #Merge hourly timesteps
+                                                                #New Shape Area
                                                                 arcpy.AddField_management(dis, "Shape_area", "DOUBLE") 
                                                                 exp = "!SHAPE.AREA@SQUAREMETERS!"
                                                                 arcpy.CalculateField_management(dis, "Shape_area", exp, "PYTHON_9.3")
@@ -68,7 +66,7 @@ for root, directories, files in os.walk(path):
                                                                 for row in arcpy.SearchCursor(clip):
                                                                         new_file.write(str(row.getValue("Shape_area")))
                                                                         new_file.write(", ")
-                                                                mrg = arcpy.Merge_management([dis, Redeye], str('mrg_' + f))
+                                                                mrg = arcpy.Merge_management([dis, Redeye], str('mrg_' + f)) #merge historic and simulated fires
                                                                 dis2 = arcpy.Dissolve_management(mrg, str('dis2_' + f), 'Uniform')
                                                                 arcpy.AddField_management(dis2, "Shape_area", "DOUBLE")
                                                                 exp2 = "!SHAPE.AREA@SQUAREMETERS!"
@@ -80,11 +78,11 @@ for root, directories, files in os.walk(path):
                                                         elif f.startswith('FAM_'):
                                                                 p = os.path.join(os.path.join(path,root),f)
                                                                 new_file.write(f)
-                                                                new_file.write(", 16360346.051562, ")
-                                                                arcpy.AddField_management(p, "Uniform", "Integer")
-                                                                arcpy.RepairGeometry_management(p)
-                                                                dis = arcpy.Dissolve_management(p, str('dis_' + f), 'Uniform')
-                                                                print(f)
+                                                                new_file.write(", 16360346.051562, ") #Famine Fire Perimeter
+                                                                arcpy.AddField_management(p, "Uniform", "Integer") #Add Dissolve agent
+                                                                arcpy.RepairGeometry_management(p) #Areas were errroneously negative
+                                                                dis = arcpy.Dissolve_management(p, str('dis_' + f), 'Uniform') #Merge hourly timesteps
+                                                                #New shape area
                                                                 arcpy.AddField_management(dis, "Shape_area", "DOUBLE") 
                                                                 exp = "!SHAPE.AREA@SQUAREMETERS!"
                                                                 arcpy.CalculateField_management(dis, "Shape_area", exp, "PYTHON_9.3")
@@ -97,7 +95,7 @@ for root, directories, files in os.walk(path):
                                                                 for row in arcpy.SearchCursor(clip):
                                                                         new_file.write(str(row.getValue("Shape_area")))
                                                                         new_file.write(", ")
-                                                                mrg = arcpy.Merge_management([dis, Famine], str('mrg_' + f))
+                                                                mrg = arcpy.Merge_management([dis, Famine], str('mrg_' + f))  #merge historic and simulated fires
                                                                 dis2 = arcpy.Dissolve_management(mrg, str('dis2_' + f), 'Uniform')
                                                                 arcpy.AddField_management(dis2, "Shape_area", "DOUBLE")
                                                                 exp2 = "!SHAPE.AREA@SQUAREMETERS!"
